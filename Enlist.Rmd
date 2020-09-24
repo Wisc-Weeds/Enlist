@@ -1,0 +1,228 @@
+---
+title: "Enlist 2019"
+author: "Maxwel Coura Oliveira"
+date: "1/28/2020"
+output: pdf_document
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(cowplot)
+library(drc)
+library(kableExtra)
+```
+
+
+# Filter
+
+```{r include=FALSE}
+data <- read_csv("airsamples.csv") %>% 
+  filter(Type_1 == "multiple")
+glimpse(data)
+```
+
+```{r include=FALSE}
+ggplot(data, aes(x=distance_m, y=filter, color=Location, linetype=Location)) + geom_point() + geom_smooth(aes(color=Location), method = "auto" , se=FALSE) + theme_bw() + 
+  theme(panel.grid = element_blank(), axis.title = element_text(size=15, color="#282728"), axis.text = element_text(size=13, color="#282728"), legend.position = c(0.85, 0.85)) +
+  scale_color_brewer(palette="Set1") +
+  labs(x="Distance (m)", y="Filter ") +
+  ggsave("filter.png", height=6, width=6)
+```
+
+```{r eval=FALSE, include=FALSE, message=FALSE}
+model <-drm(filter ~ distance_m, Location, fct = l3(), data=data)
+```
+
+
+
+
+
+
+
+
+```{r include=FALSE}
+East <- data %>% 
+  filter(Location =="East") 
+
+Ot <- data %>% 
+  filter(Location !="East") 
+
+
+
+plot(filter ~ distance_m, data=East)
+  
+Model1<-drm(filter ~ distance_m, fct = l3(), data=East)
+plot(Model1)
+
+```
+
+
+## Parameters
+
+East is the only one with model convergence.
+
+```{r echo=FALSE}
+summary(Model1)
+```
+
+## Distance for 50% and 99% reduction 
+
+```{r echo=FALSE}
+ED(Model1, c(50, 99))
+```
+
+
+```{r include=FALSE}
+East$Location <- factor(East$Location, levels = "East", labels = "East (upwind)")
+
+Ot$Location <- factor(Ot$Location, levels = c("Southwest", "Northwest", "Westcentral"), labels = c("Southwest (downwind)", "Northwest (downwind)", "Westcentral (downwind)"))
+```
+
+
+```{r warning=FALSE, include=FALSE}
+newdata <- expand.grid(distance_m=exp(seq(log(0.001), log(10), length=10)))
+
+newdata1 <- data.frame(Location ="East (upwind)", newdata) 
+
+
+
+nd=rbind(newdata1)
+
+
+pm <- predict(Model1, newdata=nd, interval="confidence")
+
+
+nd$p <- pm[,1] 
+nd$pmin <- pm[,2] 
+nd$pmax <- pm[,3] 
+
+
+
+
+East$distance_m0 <- East$distance_m
+East$distance_m0[East$distance_m0==0] <- 0.001
+```
+
+
+
+
+
+
+
+```{r echo=FALSE, warning=FALSE, fig.height=6, fig.width=6}
+ggplot(East, aes(x = distance_m0, y = filter, color=Location)) + geom_point(East, mapping=aes(x=distance_m, y=filter, color=Location)) + theme_bw() + 
+  geom_line(data=nd, aes(x=distance_m, y=p, color=Location), size=1) +
+  labs(y=bquote('2,4-D ('*eta~ 'g' ~ cm^-1*')'), x="Distance (m)", caption = "") + geom_smooth(Ot, mapping=aes(x=distance_m, y=filter, color=Location), method = 'loess',  se=FALSE) + geom_point(Ot, mapping=aes(x=distance_m, y=filter, color=Location)) +
+  ylim(0,11500) +
+  theme(legend.position=c(0.75, 0.85), panel.grid = element_blank(), legend.text = element_text(size=12), axis.title = element_text(size=15, color = "black"), legend.title = element_blank(), axis.text = element_text(size=14, color = "black")) + 
+  scale_color_brewer(palette="Set1") +
+  ggsave("Filter.png", height = 6, width = 6, dpi=600) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Injury
+
+```{r include=FALSE}
+rate <- read_csv("rating.csv")
+glimpse(rate)
+```
+
+
+
+```{r include=FALSE}
+ggplot(rate, aes(x=Distance, y=Injury, color=Location, shape=Location)) + geom_point() + geom_smooth(aes(color=Location), method = "auto" , se=FALSE) + theme_bw() + 
+  theme(panel.grid = element_blank(), axis.title = element_text(size=15, color="#282728"), axis.text = element_text(size=13, color="#282728"), legend.position = c(0.9, 0.85)) +
+  scale_color_brewer(palette="Set1") +
+  labs(x="Distance (m)", y="Injury (%)") +
+  ggsave("rating.png", height=6, width=6)
+```
+
+
+```{r include=FALSE}
+All <- rate %>% 
+  filter(Location != "S") 
+
+So <- rate %>% 
+  filter(Location == "S")
+
+plot(Injury ~ Distance, data=All)
+  
+Model<-drm(Injury ~ Distance, Location,  fct = l3(fixed =c(NA,5,NA)), data=All)
+plot(Model)
+summary(Model)
+```
+
+## Parameters
+
+South did not converge.
+
+```{r echo=FALSE}
+summary(Model)
+```
+
+## Distance for 50% and 99% reduction 
+
+```{r echo=FALSE}
+ED(Model, c(50, 99))
+```
+
+
+
+
+```{r warning=FALSE, include=FALSE}
+newdata <- expand.grid(Distance=exp(seq(log(0.5), log(65), length=65)))
+
+newdata1 <- data.frame(Location ="N-1", newdata) 
+newdata2 <- data.frame(Location ="N-2", newdata) 
+newdata3 <- data.frame(Location ="N-3", newdata) 
+
+
+nd=rbind(newdata1, newdata2, newdata3)
+
+
+pm <- predict(Model, newdata=nd, interval="confidence")
+
+
+nd$p <- pm[,1] 
+nd$pmin <- pm[,2] 
+nd$pmax <- pm[,3] 
+
+
+#write_csv(nd, "nebraskaME.csv")
+
+All$Distance0 <- All$Distance
+All$Distance0[All$Distance0==0] <- 0.5
+```
+
+
+
+
+
+```{r echo=FALSE, warning=FALSE, fig.height=6, fig.width=6}
+ggplot(All, aes(x = Distance0, y = Injury, color=Location)) + geom_point(All, mapping=aes(x=Distance, y=Injury, color=Location)) + theme_bw() + #geom_point(aes(shape=Location)) +
+  geom_line(data=nd, aes(x=Distance, y=p, color=Location), size=1) + #coord_trans(x="log") + 
+#geom_ribbon(data=nd, aes(Distance, y=p, ymin=pmin, ymax=pmax, color=Location, fill=Location, linetype=Location), alpha=0.2, color=NA) + 
+  labs(y= "Injury (%)", x="Distance (m)", caption = "") + geom_smooth(So, mapping=aes(x=Distance, y=Injury, color=Location), formula= "auto", se=FALSE) + geom_point(So, mapping=aes(x=Distance, y=Injury)) +
+  theme(legend.position=c(0.9, 0.85), panel.grid = element_blank(), legend.text = element_text(size=12), axis.title = element_text(size=15, color = "black"), legend.title = element_blank(), axis.text = element_text(size=14, color = "black")) + 
+  scale_color_brewer(palette="Set1") +
+  ggsave("Injury.png", height = 6, width = 6, dpi=600) 
+```
