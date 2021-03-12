@@ -1,0 +1,45 @@
+Service_Type,Sample_ID,Sample_Type,Sample_Description,Analysis Requested,Location,Transect,Distance_m,Type,Direction,Residue,PUF_ngm3,Filter_ngcm2
+Standard,7/03 IN S4,Filter Paper,In-swath (South 4),"2,4-D",Southwest,"Transect 1 (SW, downwind)",0,few,Downwind,913000,,5169.875
+Standard,7/03 T1.1,Filter Paper,"Transect 1, Row 1","2,4-D",Southwest,"Transect 1 (SW, downwind)",0.761962816,multiple,Downwind,172000,,973.952
+Standard,7/03 T1.2,Filter Paper,"Transect 1, Row 2","2,4-D",Southwest,"Transect 1 (SW, downwind)",1.523925632,multiple,Downwind,2040,,11.552
+Standard,7/03 T1.4,Filter Paper,"Transect 1, Row 4","2,4-D",Southwest,"Transect 1 (SW, downwind)",3.047851265,multiple,Downwind,980,,5.549
+Standard,7/03 T1.8,Filter Paper,"Transect 1, Row 8","2,4-D",Southwest,"Transect 1 (SW, downwind)",6.09570253,multiple,Downwind,254,,1.438
+Standard,7/03 T1.16,Filter Paper,"Transect 1, Row 16","2,4-D",Southwest,"Transect 1 (SW, downwind)",12.19140506,multiple,Downwind,139,,0.787
+Standard,7/03 T1.32,Filter Paper,"Transect 1, Row 32","2,4-D",Southwest,"Transect 1 (SW, downwind)",24.38281012,multiple,Downwind,44.7,,0.253
+Standard,7/03 IN S5,Filter Paper,In-swath (South 5),"2,4-D",Southcentral,"Transect 2 (S, downwind)",0,few,Downwind,1230000,,6964.892
+Standard,7/03 T2.1,Filter Paper,"Transect 2, Row 1","2,4-D",Southcentral,"Transect 2 (S, downwind)",0.761962816,multiple,Downwind,84500,,478.482
+Standard,7/03 T2.2,Filter Paper,"Transect 2, Row 2","2,4-D",Southcentral,"Transect 2 (S, downwind)",1.523925632,multiple,Downwind,4840,,27.407
+Standard,7/03 T2.4,Filter Paper,"Transect 2, Row 4","2,4-D",Southcentral,"Transect 2 (S, downwind)",3.047851265,multiple,Downwind,2140,,12.118
+Standard,7/03 T2.8,Filter Paper,"Transect 2, Row 8","2,4-D",Southcentral,"Transect 2 (S, downwind)",6.09570253,multiple,Downwind,166,,0.94
+Standard,7/03 T2.16,Filter Paper,"Transect 2, Row 16","2,4-D",Southcentral,"Transect 2 (S, downwind)",12.19140506,multiple,Downwind,102,,0.578
+Standard,7/03 T2.32,Filter Paper,"Transect 2, Row 32","2,4-D",Southcentral,"Transect 2 (S, downwind)",24.38281012,multiple,Downwind,55.5,,0.314
+Standard,7/03 IN S3,Filter Paper,In-swath (South 3),"2,4-D",Southeast,"Transect 3 (SE, downwind)",0,few,Downwind,920000,,5209.513
+Standard,7/03 T3.1,Filter Paper,"Transect 3, Row 1","2,4-D",Southeast,"Transect 3 (SE, downwind)",0.761962816,multiple,Downwind,55600,,314.836
+Standard,7/03 T3.2,Filter Paper,"Transect 3, Row 2","2,4-D",Southeast,"Transect 3 (SE, downwind)",1.523925632,multiple,Downwind,2470,,13.986
+Standard,7/03 T3.4,Filter Paper,"Transect 3, Row 4","2,4-D",Southeast,"Transect 3 (SE, downwind)",3.047851265,multiple,Downwind,1420,,8.041
+Standard,7/03 T3.8,Filter Paper,"Transect 3, Row 8","2,4-D",Southeast,"Transect 3 (SE, downwind)",6.09570253,multiple,Downwind,196,,1.11
+Standard,7/03 T3.16,Filter Paper,"Transect 3, Row 16","2,4-D",Southeast,"Transect 3 (SE, downwind)",12.19140506,multiple,Downwind,118,,0.668
+Standard,7/03 T3.32,Filter Paper,"Transect 3, Row 32","2,4-D",Southeast,"Transect 3 (SE, downwind)",24.38281012,multiple,Downwind,25.6,,0.145
+Standard,7/03 IN N3,Filter Paper,In-swath (North 3),"2,4-D",Northcentral,"Transect 4 (NW, upwind)",0,few,Upwind,1090000,,6172.14
+Standard,7/03 T4.1,Filter Paper,"Transect 4, Row 1","2,4-D",Northcentral,"Transect 4 (NW, upwind)",0.761962816,multiple,Upwind,3.93,,0.022
+Standard,7/03 T4.2,Filter Paper,"Transect 4, Row 2","2,4-D",Northcentral,"Transect 4 (NW, upwind)",1.523925632,multiple,Upwind,3.14,,0.018
+Standard,7/03 T4.4,Filter Paper,"Transect 4, Row 4","2,4-D",Northcentral,"Transect 4 (NW, upwind)",3.047851265,multiple,Upwind,0,,0
+Standard,7/03 T4.8,Filter Paper,"Transect 4, Row 8","2,4-D",Northcentral,"Transect 4 (NW, upwind)",6.09570253,multiple,Upwind,28.6,,0.162
+Standard,7/03 T4.16,Filter Paper,"Transect 4, Row 16","2,4-D",Northcentral,"Transect 4 (NW, upwind)",12.19140506,multiple,Upwind,0,,0
+Standard,7/03 T4.32,Filter Paper,"Transect 4, Row 32","2,4-D",Northcentral,"Transect 4 (NW, upwind)",24.38281012,multiple,Upwind,0,,0
+Standard,7/03 IN S1,Filter Paper,In-swath (South 1),"2,4-D",In-swath,,0,few,In-swath,890000,,5039.638
+Standard,7/03 IN S2,Filter Paper,In-swath (South 2),"2,4-D",In-swath,,0,few,In-swath,984000,,5571.914
+Standard,7/03 IN N1,Filter Paper,In-swath (North 1),"2,4-D",In-swath,,0,few,In-swath,1000000,,5662.514
+Standard,7/03 IN N2,Filter Paper,In-swath (North 2),"2,4-D",In-swath,,0,few,In-swath,1120000,,6342.016
+Standard,7/03 IN N4,Filter Paper,In-swath (North 4),"2,4-D",In-swath,,0,few,In-swath,917000,,5192.525
+Standard,7/03 IN N5,Filter Paper,In-swath (North 5),"2,4-D",In-swath,,0,few,In-swath,1050000,,5945.64
+Standard,7/03/2020 T1,PUF,Transect 1,"2,4-D",Southwest,,6.09570253,few,Downwind,10.1,1.158,
+Standard,7/03/2020 T2,PUF,Transect 2,"2,4-D",Southcentral,,6.09570253,few,Downwind,9.24,1.06,
+Standard,7/03/2020 T3,PUF,Transect 3,"2,4-D",Southeast,,6.09570253,few,Downwind,15.3,1.801,
+Standard,7/03/2020 UP1,PUF,Upwind 1,"2,4-D",Northwest,,6.09570253,few,Upwind,2.2,0.252,
+Standard,7/03/2020 UP2/T4,PUF,Transect 4/Upwind 2,"2,4-D",Northcentral,,6.09570253,few,Upwind,4.75,0.538,
+Standard,7/03/2020 UP3,PUF,Upwind 3,"2,4-D",Northeast,,6.09570253,few,Upwind,3.45,0.395,
+Standard,7/03/2020 IN1,PUF,In-swath 1,"2,4-D",In-swath,,0,few,In-swath,34.66,3.948,
+Standard,7/03/2020 IN2,PUF,In-swath 2,"2,4-D",In-swath,,0,few,In-swath,40.9,4.67,
+Standard,7/03/2020 IN3,PUF,In-swath 3,"2,4-D",In-swath,,0,few,In-swath,33.2,3.811,
+Standard,7/03/2020 IN4,PUF,In-swath 4,"2,4-D",In-swath,,0,few,In-swath,29.7,3.414,

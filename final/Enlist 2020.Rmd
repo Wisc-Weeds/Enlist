@@ -1,0 +1,470 @@
+---
+title: "Enlist"
+author: "Sarah Striegel"
+date: "9/11/2020"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(cowplot)
+library(drc)
+library(kableExtra)
+library(rcompanion)
+library(ggplot2)
+library(RColorBrewer)
+library(CircStats)
+library(openair)
+library(scales)
+library(grDevices)
+library(tidyverse)
+library(car)
+library(emmeans)
+```
+
+# Filter
+
+```{r include=FALSE}
+data <- read_csv("airsamples20.csv") %>% 
+  filter(Type == "multiple") %>%
+  filter(Direction != "Upwind")
+glimpse(data)
+```
+
+```{r include=FALSE}
+ggplot(data, aes(x=Distance_m, y=Filter_ngcm2, color=Location, linetype=Location)) + geom_point() + geom_smooth(aes(color=Location), method = "auto" , se=FALSE) + theme_bw() + 
+  theme(panel.grid = element_blank(), axis.title = element_text(size=15, color="#282728"), axis.text = element_text(size=13, color="#282728"), legend.position = c(0.85, 0.85)) +
+  scale_color_brewer(palette="Set1") +
+  labs(x="Distance (m)", y="Filter ") +
+  ggsave("filter1.png", height=6, width=6)
+```
+
+```{r eval=FALSE, include=FALSE, message=FALSE}
+model <-drm(Filter_ngcm2 ~ Distance_m, fct = l3(), data=data)
+```
+
+```{r include=FALSE}
+SW <- data %>% 
+  filter(Location =="Southwest") 
+NC <- data %>%
+  filter(Location=="Northcentral")
+SC <- data %>%
+  filter(Location=="Southcentral")
+SE <- data %>%
+  filter(Location=="Southeast")
+DW <- data %>%
+  filter(Location !="Northcentral")
+  
+Model1<-drm(Filter_ngcm2 ~ Distance_m, fct = l3(), data=SW)
+plot(Model1)
+
+#Model2<-drm(Filter_ngcm2 ~ Distance_m, fct = l3(), data=NC)
+#plot(Model2)
+
+Model3<-drm(Filter_ngcm2 ~ Distance_m, fct = l3(), data=SC)
+plot(Model3)
+
+Model4<-drm(Filter_ngcm2 ~ Distance_m, fct = l3(), data=SE)
+plot(Model4)
+
+Model5 <- drm(Filter_ngcm2 ~ Distance_m, Transect, fct = l3(), data=DW)
+```
+
+## Parameters
+
+```{r echo=FALSE}
+summary(Model1)
+#summary(Model2)
+summary(Model3)
+summary(Model4)
+summary(model)
+```
+
+## Distance for 50% and 99% reduction 
+
+```{r echo=FALSE}
+ED(Model1, c(50, 90))
+#ED(Model2, c(50, 90))
+ED(Model3, c(50, 90))
+ED(Model4, c(50, 90))
+ED(model, c(50,90))
+```
+
+```{r}
+data <- read_csv("airsamples1920combined.csv") %>% 
+  filter(Type == "multiple") %>%
+  filter(Direction != "Upwind")
+
+model <-drm(Filter_ngcm2 ~ Distance_m, Year, fct = l3(), data=data)
+summary(model)
+ED(model, c(50,90))
+```
+
+
+```{r include=FALSE}
+NC$Transect <- factor(NC$Transect, levels = "Transect 4 (NW, upwind)", labels = "Transect 4 (NW, upwind)")
+DW$Transect <- factor(DW$Transect, levels = c("Transect 1 (SW, downwind)", "Transect 2 (S, downwind)", "Transect 3 (SE, downwind)"), labels = c("Transect 1 (SW, downwind)", "Transect 2 (S, downwind)", "Transect 3 (SE, downwind)"))
+
+data$Year <- factor(data$Year, levels=c("2019", "2020"), labels = c("2019", "2020"))
+```
+
+```{r warning=FALSE, include=FALSE}
+newdata <- expand.grid(Distance_m=exp(seq(log(0.001), log(25), length=25)))
+newdata1 <- data.frame(Year="2019", newdata) 
+newdata2 <- data.frame(Year="2020", newdata) 
+nd=rbind(newdata1, newdata2)
+pm <- predict(model, newdata=nd, interval="confidence")
+nd$p <- pm[,1] 
+nd$pmin <- pm[,2] 
+nd$pmax <- pm[,3] 
+data$Distance_m0 <- data$Distance_m
+data$Distance_m0[data$Distance_m0==0] <- 0.001
+```
+
+```{r echo=FALSE, warning=FALSE, fig.height=6, fig.width=6}
+ggplot(data, aes(x = Distance_m0, y = Filter_ngcm2, color=Year)) + geom_point(data, mapping=aes(x=Distance_m, y=Filter_ngcm2, color=Year)) + theme_bw() + 
+  geom_line(data=nd, aes(x=Distance_m, y=p, color=Year), size=1) + xlim(0.7,25) + ylim(0,1000) +
+  labs(y=bquote('2,4-D ('*eta~ 'g' ~ cm^-2*')'), x="Distance (m)", caption = "") + 
+  theme(legend.position=c(0.85, 0.9), panel.grid = element_blank(), legend.text = element_text(size=12), axis.title = element_text(size=15, color = "black"), legend.title = element_blank(), axis.text = element_text(size=14, color = "black")) + 
+   scale_color_manual(values=c("#adadad", "#c5050c")) +
+  ggsave("Filter V4.png", height = 6, width = 6, dpi=600) 
+```
+
+```{r echo=FALSE, warning=FALSE, fig.height=6, fig.width=6}
+ggplot(DW, aes(x = Distance_m0, y = Filter_ngcm2, color=Transect)) + geom_point(NC, mapping=aes(x=Distance_m, y=Filter_ngcm2, color=Transect)) + theme_bw() + 
+  geom_line(data=nd, aes(x=Distance_m, y=p, color=Transect), size=1) +
+  labs(y=bquote('2,4-D ('*eta~ 'g' ~ cm^-2*')'), x="Distance (m)", caption = "") + geom_line(NC, mapping=aes(x=Distance_m, y=Filter_ngcm2, color=Transect), size=1,  se=FALSE) + geom_point(DW, mapping=aes(x=Distance_m, y=Filter_ngcm2, color=Transect)) +
+  ylim(0,11500) +
+  theme(legend.position=c(0.7, 0.85), panel.grid = element_blank(), legend.text = element_text(size=12), axis.title = element_text(size=15, color = "black"), legend.title = element_blank(), axis.text = element_text(size=14, color = "black")) + 
+  scale_color_brewer(palette="Set1") +
+  ggsave("Filter V3.png", height = 6, width = 6, dpi=600) 
+```
+
+## Injury
+```{r include=FALSE}
+rate <- read_csv("rating20.csv")
+glimpse(rate)
+str(rate)
+```
+
+```{r echo=FALSE}
+ggplot(rate, aes(x=Distance, y=Injury, color=Location, shape=Location)) + geom_point() + geom_smooth(aes(color=Location), method = "auto" , se=FALSE) + theme_bw() + 
+  theme(panel.grid = element_blank(), axis.title = element_text(size=15, color="#282728"), axis.text = element_text(size=13, color="#282728"), legend.position = c(0.85, 0.85)) +
+  scale_color_brewer(palette="Set1") +
+  labs(x="Distance (m)", y="Injury (%)") +
+  ggsave("rating.png", height=6, width=6)
+```
+
+Nonlinear and linear models failed to converge. Essentially no injury was detected, so it may be appropriate to just report that.
+
+```{r include=FALSE}
+SWc <- rate %>% 
+  filter(Location =="Southwest", Area=="Covered")
+SWuc <- rate %>% 
+  filter(Location =="Southwest", Area=="Uncovered")
+NCc <- rate %>%
+  filter(Location=="Northcentral", Area=="Covered")
+NCuc <- rate %>%
+  filter(Location=="Northcentral", Area=="Uncovered")
+SCc <- rate %>%
+  filter(Location=="Southcentral", Area=="Covered")
+SCuc <- rate %>%
+  filter(Location=="Southcentral", Area=="Uncovered")
+SEc <- rate %>%
+  filter(Location=="Southeast", Area=="Covered")
+SEuc <- rate %>%
+  filter(Location=="Southeast", Area=="Uncovered")
+C <- rate %>%
+  filter(Area != "Uncovered")
+DWun <- rate %>%
+  filter(Area != "Uncovered") %>%
+  filter(Location != "Northcentral")
+
+model1 = lm(Injury~Distance, data=SWc)
+model1.2 = lm(Injury~Distance, data=SWuc)
+model2= lm(Injury~Distance, data=NCc)
+model2.2= lm(Injury~Distance, data=NCuc)
+model3 = lm(Injury~Distance, data=SCc)
+model3.2 = lm(Injury~Distance, data=SCuc)
+model4 = lm(Injury~Distance, data=SEc)
+model4.2 = lm(Injury~Distance, data=SEuc)
+
+model = lm (Injury~Distance, data=DWun)
+```
+
+```{r include=FALSE}
+summary(model1)
+summary(model2)
+summary(model3)
+summary(model4)
+summary(model1.2)
+summary(model2.2)
+summary(model3.2)
+summary(model4.2)
+
+summary(model)
+```
+
+```{r}
+rate <- read_csv("rating1920combined.csv") %>%
+  filter(Area != "Covered") %>%
+  filter(Direction != "Upwind")
+
+rate$Year <- factor(rate$Year, levels=c("2019", "2020"), labels = c("2019", "2020"))
+```
+
+```{r}
+ggplot(rate, mapping=aes(x=Distance, y=Injury, color=Year)) + 
+  labs(y= "Injury (%)", x="Distance (m)", caption = "") + 
+  geom_line(rate, mapping=aes(x=Distance, y=Injury, color=Year), size=1, formula= "auto", se=FALSE) + 
+  geom_point(rate, mapping=aes(x=Distance, y=Injury, color=Year)) + theme_bw() + ylim(0,5) +
+  theme(legend.position=c(0.85, 0.9), 
+        panel.grid = element_blank(), 
+        #panel.background = element_blank(), 
+        legend.text = element_text(size=12), 
+        axis.title = element_text(size=15, color = "black"), 
+        legend.title = element_blank(), 
+        axis.text = element_text(size=14, color = "black")) + 
+  scale_color_manual(values=c("#adadad", "#c5050c")) +
+  ggsave("Injury V2.png", height = 6, width = 6, dpi=600) 
+```
+
+```{r}
+ggplot(C, mapping=aes(x=Distance, y=Injury, color=Transect)) + 
+  labs(y= "Injury (%)", x="Distance (m)", caption = "") + geom_line(C, mapping=aes(x=Distance, y=Injury, color=Transect), size=1, formula= "auto", se=FALSE) + geom_point(C, mapping=aes(x=Distance, y=Injury, color=Transect)) + ylim(0,5) + theme_bw() + xlim(0,10) +
+  theme(legend.position=c(0.7, 0.85), 
+        panel.grid = element_blank(), 
+        #panel.background = element_blank(), 
+        legend.text = element_text(size=12), 
+        axis.title = element_text(size=15, color = "black"), 
+        legend.title = element_blank(), 
+        axis.text = element_text(size=14, color = "black")) + 
+  scale_color_brewer(palette="Set1") +
+  ggsave("Injury.png", height = 6, width = 6, dpi=600) 
+```
+
+
+## Air sampler data
+```{r include=FALSE}
+data <- read_csv("airsamples20.csv")
+data %>%
+  mutate(Sample_Type = as.factor(Sample_Type)) %>%
+  mutate(Direction = as.factor(Direction))
+data_PUF = data %>%
+  filter(Sample_Type=="PUF")
+data_PUF #PUF_ngm3 is the value to compare
+```
+
+```{r include=FALSE}
+#Compare raw concentration, grouped by Direction (e.g., downwind, upwind) with those in-swath & relative to the other direction
+df = groupwiseMean(PUF_ngm3~Location, data=data_PUF, digits=3)
+df
+df = groupwiseMean(PUF_ngm3~Direction, data=data_PUF, digits=3)
+df
+
+##ANOVA
+data_PUF = data_PUF %>%
+  filter(Sample_Description != "In-swath 3") #Removing one of the in-swath samples so we have equal sample size amongst Direction groups
+model=lm(PUF_ngm3~Direction, data=data_PUF)
+qqnorm(resid(model))
+residuals = resid(model)
+shapiro.test(residuals) #passes P>0.05
+hist(residuals,freq=F, xlab="Residuals", ylab="Frequency", main="")
+leveneTest(PUF_ngm3 ~ Direction, data=data_PUF) #passes P>0.05
+plot(model)
+```
+
+## ANOVA
+```{r echo=TRUE}
+model=lm(PUF_ngm3~Direction, data=data_PUF)
+summary(model)
+anova(model) #Direction P=0.0001414
+lsm <- emmeans(model, ~ Direction, adjust="none", contr="pairwise", type="response")
+lsm #pairwise comparisons are all significant with Fisher's LSD test, meaning all groups are different
+cld <- CLD(lsm, adjust="none", reversed=TRUE, Letters= letters, type="response")
+cld 
+```
+
+# Wind rose
+```{r include=FALSE}
+data=read.csv("windroseweather.csv")
+str(data)
+data = data %>%
+  drop_na(spd) %>%
+  mutate(Year=as.factor(Year)) %>%
+  mutate(Period=as.factor(Period))
+```
+
+```{r include=FALSE}
+   # WindRose.R
+require(ggplot2)
+require(RColorBrewer)
+require(scales)
+plot.windrose <- function(data,
+                          spd,
+                          dir,
+                          spdres = 1,
+                          dirres = 22.5,
+                          spdmin = 0,
+                          spdmax = 4,
+                          spdseq = NULL,
+                          palette = "Reds", 
+                          countmax = NA,
+                          debug = 0){
+  # Look to see what data was passed in to the function
+  if (is.numeric(spd) & is.numeric(dir)){
+    # assume that we've been given vectors of the speed and direction vectors
+    data <- data.frame(spd = spd,
+                       dir = dir)
+    spd = "spd"
+    dir = "dir"
+  } else if (exists("data")){
+    # Assume that we've been given a data frame, and the name of the speed 
+    # and direction columns. This is the format we want for later use.    
+  }  
+  # Tidy up input data ----
+  n.in <- NROW(data)
+  dnu <- (is.na(data[[spd]]) | is.na(data[[dir]]))
+  data[[spd]][dnu] <- NA
+  data[[dir]][dnu] <- NA
+  # figure out the wind speed bins ----
+  if (missing(spdseq)){
+    spdseq <- seq(spdmin,spdmax,spdres)
+  } else {
+    if (debug >0){
+      cat("Using custom speed bins \n")
+    }
+  }
+  # get some information about the number of bins, etc.
+  n.spd.seq <- length(spdseq)
+  n.colors.in.range <- n.spd.seq - 1
+  # create the color map
+  spd.colors <- colorRampPalette(brewer.pal(min(max(3,
+                                                    n.colors.in.range),
+                                                min(9,
+                                                    n.colors.in.range)),                                               
+                                            palette))(n.colors.in.range)
+  if (max(data[[spd]],na.rm = TRUE) > spdmax){    
+    spd.breaks <- c(spdseq,
+                    max(data[[spd]],na.rm = TRUE))
+    spd.labels <- c(paste(c(spdseq[1:n.spd.seq-1]),
+                          '-',
+                          c(spdseq[2:n.spd.seq])),
+                    paste(spdmax,
+                          "-",
+                          max(data[[spd]],na.rm = TRUE)))
+    spd.colors <- c(spd.colors, "grey50")
+  } else{
+    spd.breaks <- spdseq
+    spd.labels <- paste(c(spdseq[1:n.spd.seq-1]),
+                        '-',
+                        c(spdseq[2:n.spd.seq]))    
+  }
+  data$spd.binned <- cut(x = data[[spd]],
+                         breaks = spd.breaks,
+                         labels = spd.labels,
+                         ordered_result = TRUE)
+  # figure out the wind direction bins
+  dir.breaks <- c(-dirres/2,
+                  seq(dirres/2, 360-dirres/2, by = dirres),
+                  360+dirres/2)  
+  dir.labels <- c(paste(360-dirres/2,"-",dirres/2),
+                  paste(seq(dirres/2, 360-3*dirres/2, by = dirres),
+                        "-",
+                        seq(3*dirres/2, 360-dirres/2, by = dirres)),
+                  paste(360-dirres/2,"-",dirres/2))
+  # assign each wind direction to a bin
+  dir.binned <- cut(data[[dir]],
+                    breaks = dir.breaks,
+                    ordered_result = TRUE)
+  levels(dir.binned) <- dir.labels
+  data$dir.binned <- dir.binned
+  # Run debug if required ----
+  if (debug>0){    
+    cat(dir.breaks,"\n")
+    cat(dir.labels,"\n")
+    cat(levels(dir.binned),"\n")
+  }  
+  # create the plot ----
+  p.windrose <- ggplot(data = data,
+                       aes(x = dir.binned,
+                           fill = spd.binned
+                           ,y = (..count..)/sum(..count..)
+                           ))+
+    geom_bar() + 
+    scale_x_discrete(drop = FALSE,
+labels = c("N","","NE","", "E", "", "SE","", 
+             "S","", "SW","", "W","","NW","")) +
+    coord_polar(start = -((dirres/2)/360) * 2*pi) +
+    scale_fill_manual(name = expression(paste("Wind speed (m s"^"-1",")")), 
+                      values = spd.colors,
+                      drop = FALSE) +
+    theme(axis.title.x = element_blank(), 
+          strip.text.x = element_text(size = 12, colour = "black", face="bold", angle = 0), 
+          axis.text=element_text(size=13, color="black"), 
+        axis.title=element_text(size=15,color="black"), 
+        panel.background = element_rect(fill="white", color = "black"), 
+        panel.grid.major = element_line(color = "grey80"), 
+        legend.position="right",  
+        legend.text = element_text(colour="black", size = 13), 
+        legend.title = element_text(colour="black", size=15), panel.grid.minor = element_blank()) +
+    scale_y_continuous(labels = scales::percent_format(accuracy=1)) + 
+    ylab("Frequency") 
+  # adjust axes if required
+  if (!is.na(countmax)){
+    p.windrose <- p.windrose +
+      ylim(c(0,countmax))
+  }
+  # print the plot
+  print(p.windrose)  
+  # return the handle to the wind rose
+  return(p.windrose)
+}
+```
+
+
+```{r Figure, echo=FALSE}
+plot<-plot.windrose(data = data,
+              spd = "spd",
+              dir = "dir") 
+plot +  facet_wrap(.~Year) +  #labs(caption = "Oliveira et al. (2018) 96:1051-1063, the Plant Journal") +
+    ggsave("WindRose_combined years.png", units="in", width=9, height=6, dpi=600)
+```
+
+#Other temp figure
+```{r}
+coeff = 7.2
+
+data %>%
+  drop_na(H.h)
+
+ggplot(data, aes(x = Hour)) +
+  scale_y_continuous(expand = c(0,0),limits = c(0,35)) +
+  facet_wrap(.~Year) +
+  geom_line(aes(y=H, color="H = 1.83 m"), size=1) +
+  geom_line(aes(y=h, color="h = 0.66 m"), size=1) +
+  geom_line(aes(y=H.h*coeff, color="H-h"), size=1) +
+  theme_bw() + theme(axis.title.y = element_text(size=15, color="black"),
+                     axis.title.x = element_text(size=15, color="black"),
+                     strip.text.x = element_text(size = 12, colour = "black", face="bold", angle = 0),
+                     legend.position="bottom",
+                     legend.direction="horizontal",
+                     legend.text = element_text(color="black", size = 15), 
+                     legend.title = element_blank(),
+                     legend.background = element_blank(),
+                     legend.key = element_blank(),
+                     axis.text.x = element_text(size=13, color="black"),
+                     axis.text.y = element_text(size=13, color="black"), 
+                     panel.background = element_rect(fill="white"),
+                     panel.grid.major=element_line(color="white"),
+                     panel.grid.minor=element_line(color="white")) +
+  scale_x_continuous(breaks=c(0,6,12,18,24,30,36,42,48)) +
+  scale_y_continuous(sec.axis=sec_axis(~./coeff, name="Temperature gradient (°C)")) +
+  scale_color_manual(values=c("#adadad", "#0479a8", "#c5050c")) +
+  labs(y="Air temperature (°C)", x="Time following application (hours)") +
+  ggsave("Temperature.tiff", units="in", width=7, height=5, dpi=600)
+```
+

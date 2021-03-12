@@ -1,0 +1,219 @@
+---
+title: "Enlist"
+author: "Sarah Striegel"
+date: "9/11/2020"
+output: html_document
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(cowplot)
+library(drc)
+library(kableExtra)
+```
+
+# Filter
+
+```{r include=FALSE}
+data <- read_csv("airsamples.csv") %>% 
+  filter(Type_1 == "multiple") %>%
+  filter(Direction != "Upwind")
+glimpse(data)
+str(data)
+```
+
+```{r include=FALSE}
+ggplot(data, aes(x=distance_m, y=filter, color=Location, linetype=Location)) + geom_point() + geom_smooth(aes(color=Location), method = "auto" , se=FALSE) + theme_bw() + 
+  theme(panel.grid = element_blank(), axis.title = element_text(size=15, color="#282728"), axis.text = element_text(size=13, color="#282728"), legend.position = c(0.85, 0.85)) +
+  scale_color_brewer(palette="Set1") +
+  labs(x="Distance (m)", y="Filter ") +
+  ggsave("filter 2.png", height=6, width=6)
+```
+
+```{r eval=FALSE, include=FALSE, message=FALSE}
+model <-drm(filter ~ distance_m, fct = l3(), data=data)
+```
+
+```{r include=FALSE}
+East <- data %>% 
+  filter(Location =="East") 
+Southwest <- data %>% 
+  filter(Location =="Southwest")
+Westcentral <- data %>% 
+  filter(Location =="Westcentral")
+Northwest <- data %>% 
+  filter(Location =="Northwest")
+M <- rbind(East, Northwest)
+NM <- rbind(Southwest, Westcentral)
+
+plot(filter ~ distance_m, data=Westcentral)
+  
+Model1<-drm(filter ~ distance_m, fct = l3(), data=East)
+plot(Model1)
+#Model2<-drm(filter ~ distance_m, fct = l3(), data=Southwest)
+#plot(Model2)
+#Model3<-drm(filter ~ distance_m, fct = l3(), data=Westcentral)
+#plot(Model3)
+Model4<-drm(filter ~ distance_m, fct = l3(), data=Northwest)
+plot(Model4)
+
+model <- drm(filter ~ distance_m, fct = l3(), data=M)
+```
+
+## Parameters
+
+East is the only one with model convergence.
+
+```{r echo=FALSE}
+summary(Model1)
+#summary(Model2)
+#summary(Model3)
+summary(Model4)
+summary(model)
+```
+
+## Distance for 50% and 99% reduction 
+
+```{r echo=FALSE}
+ED(Model1, c(50, 90))
+ED(Model4, c(50, 90))
+ED(model, c(50,90))
+```
+
+```{r include=FALSE}
+NM$Transect <- factor(NM$Transect, levels = c("Transect 2 (W, downwind)", "Transect 3 (SW, downwind)"), labels = c("Transect 2 (W, downwind)", "Transect 3 (SW, downwind)"))
+M$Transect <- factor(M$Transect, levels = c("Transect 1 (NW, downwind)", "Transect 4 (E, upwind"), labels = c("Transect 1 (NW, downwind)", "Transect 4 (E, upwind"))
+```
+
+```{r warning=FALSE, include=FALSE}
+newdata <- expand.grid(distance_m=exp(seq(log(0.001), log(25), length=25)))
+newdata1 <- data.frame(Transect ="Transect 4 (E, upwind)", newdata) 
+newdata2 <- data.frame(Transect ="Transect 1 (NW, downwind)", newdata)
+nd=rbind(newdata1, newdata2)
+pm <- predict(Model5, newdata=nd, interval="confidence")
+nd$p <- pm[,1] 
+nd$pmin <- pm[,2] 
+nd$pmax <- pm[,3] 
+M$distance_m0 <- M$distance_m
+M$distance_m0[M$distance_m0==0] <- 0.001
+```
+
+```{r echo=FALSE, warning=FALSE, fig.height=6, fig.width=6}
+ggplot(M, aes(x = distance_m0, y = filter, color=Transect)) + geom_point(M, mapping=aes(x=distance_m, y=filter, color=Transect)) + theme_bw() + 
+  geom_line(data=nd, aes(x=distance_m, y=p, color=Transect), size=1) +
+  labs(y=bquote('2,4-D ('*eta~ 'g' ~ cm^-2*')'), x="Distance (m)", caption = "") + geom_smooth(NM, mapping=aes(x=distance_m, y=filter, color=Transect), method = 'loess',  se=FALSE) + geom_point(NM, mapping=aes(x=distance_m, y=filter, color=Transect)) +
+  ylim(0,11500) +
+  theme(legend.position=c(0.7, 0.85), panel.grid = element_blank(), legend.text = element_text(size=12), axis.title = element_text(size=15, color = "black"), legend.title = element_blank(), axis.text = element_text(size=14, color = "black")) + 
+  scale_color_brewer(palette="Set1") +
+  ggsave("Filter.png", height = 6, width = 6, dpi=600) 
+```
+
+# Injury
+
+```{r include=FALSE}
+rate <- read_csv("rating.csv") %>%
+  filter(Location != "S") %>%
+  filter(Type != "Covered")
+glimpse(rate)
+str(rate)
+```
+
+```{r include=FALSE}
+ggplot(rate, aes(x=Distance, y=Injury, color=Location, shape=Location)) + geom_point() + geom_smooth(aes(color=Location), method = "auto" , se=FALSE) + theme_bw() + 
+  theme(panel.grid = element_blank(), axis.title = element_text(size=15, color="#282728"), axis.text = element_text(size=13, color="#282728"), legend.position = c(0.9, 0.85)) +
+  scale_color_brewer(palette="Set1") +
+  labs(x="Distance (m)", y="Injury (%)") +
+  ggsave("rating.png", height=6, width=6)
+```
+
+```{r include=FALSE}
+All <- rate %>% 
+  filter(Location != "S", Type=="Covered") 
+So <- rate %>%
+  filter(Location=="S", Type=="Covered")
+Ec <- rate %>% 
+  filter(Location == "S", Type=="Covered")
+Euc <- rate %>% 
+  filter(Location == "S", Type=="Non-covered")
+NWc <- rate %>% 
+  filter(Location == "N-1", Type=="Covered")
+NWuc <- rate %>% 
+  filter(Location == "N-1", Type=="Non-covered")
+WCc <- rate %>% 
+  filter(Location == "N-2", Type=="Covered")
+WCuc <- rate %>% 
+  filter(Location == "N-2", Type=="Non-covered")
+SEc <- rate %>% 
+  filter(Location == "N-3", Type=="Covered")
+SEuc <- rate %>% 
+  filter(Location == "N-3", Type=="Non-covered")
+plot(Injury ~ Distance, data=All)
+  
+#Model<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=Ec)
+#Model<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=Euc)
+Model<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=NWc)
+#Model<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=NWuc)
+Model2<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=WCc)
+#Model3<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=WCuc)
+Model3<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=SEc)
+#Model4<-drm(Injury ~ Distance,  fct = l3(fixed =c(NA,5,NA)), data=SEuc)
+plot(Model)
+plot(Model2)
+plot(Model3)
+
+Model4 <- drm(Injury ~ Distance, fct = l3(fixed =c(NA,5,NA)), data=rate)
+model = lm(Injury ~ Distance, data=rate)
+
+summary(Model)
+summary(Model2)
+summary(Model3)
+```
+
+## Parameters
+
+South did not converge.
+
+```{r echo=FALSE}
+summary(Model)
+summary(Model2)
+summary(Model3)
+
+summary(model)
+```
+
+## Distance for 50% and 99% reduction 
+
+```{r echo=FALSE}
+ED(Model, c(50, 90))
+ED(Model2, c(50, 90))
+ED(Model3, c(50, 90))
+```
+
+```{r}
+So$Transect <- factor(So$Transect, levels = "Transect 4 (E, upwind)", labels = "Transect 4 (E, upwind)")
+```
+
+
+```{r warning=FALSE, include=FALSE}
+newdata <- expand.grid(Distance=exp(seq(log(0.7), log(16), length=16)))
+newdata1 <- data.frame(Transect ="Transect 1 (NW, downwind)", newdata) 
+newdata2 <- data.frame(Transect ="Transect 2 (W, downwind)", newdata) 
+newdata3 <- data.frame(Transect ="Transect 3 (SW, downwind)", newdata) 
+nd=rbind(newdata1, newdata2, newdata3)
+pm <- predict(Model4, newdata=nd, interval="confidence")
+nd$p <- pm[,1] 
+nd$pmin <- pm[,2] 
+nd$pmax <- pm[,3] 
+#write_csv(nd, "nebraskaME.csv")
+All$Distance0 <- All$Distance
+All$Distance0[All$Distance0==0] <- 0.5
+```
+
+```{r echo=FALSE, warning=FALSE, fig.height=6, fig.width=6}
+ggplot(All, aes(x = Distance0, y = Injury, color=Transect)) + geom_point(All, mapping=aes(x=Distance, y=Injury, color=Transect)) + theme_bw() + #geom_point(aes(shape=Location)) +
+  geom_line(data=nd, aes(x=Distance, y=p, color=Transect), size=1) + 
+  labs(y= "Injury (%)", x="Distance (m)", caption = "") + geom_line(So, mapping=aes(x=Distance, y=Injury, color=Transect), size=1, formula= "auto", se=FALSE) + geom_point(So, mapping=aes(x=Distance, y=Injury)) +
+  theme(legend.position=c(0.7, 0.85), panel.grid = element_blank(), legend.text = element_text(size=12), axis.title = element_text(size=15, color = "black"), legend.title = element_blank(), axis.text = element_text(size=14, color = "black")) + 
+  scale_color_brewer(palette="Set1") +
+  ggsave("Injury.png", height = 6, width = 6, dpi=600) 
+```
